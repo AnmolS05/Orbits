@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="Theme.Orbits" parent="android:Theme.DeviceDefault.NoActionBar" />
+
+    <!-- Translucent theme for QuickOrbit (completely invisible UI) -->
+    <style name="Theme.Orbits.Translucent" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <!-- Transparent Dialog theme for TagSaveActivity -->
+    <style name="Theme.Orbits.TransparentDialog" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+</resources>
