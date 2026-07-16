@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OrbitDao {
-    @Query("SELECT * FROM orbits ORDER BY createdAt DESC")
+    @Query("SELECT * FROM orbits ORDER BY isPinned DESC, createdAt DESC")
     fun getAllOrbits(): Flow<List<OrbitEntity>>
 
     @Query("SELECT * FROM orbits WHERE cleanUrl = :url LIMIT 1")
