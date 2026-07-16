@@ -134,7 +134,11 @@ class OrbitViewModel(private val repository: OrbitRepository) : ViewModel() {
         }
     }
 
-
+    fun togglePin(orbit: Orbit) {
+        viewModelScope.launch {
+            repository.updateOrbit(orbit.copy(isPinned = !orbit.isPinned))
+        }
+    }
 }
 
 class OrbitViewModelFactory(private val repository: OrbitRepository) : androidx.lifecycle.ViewModelProvider.Factory {
