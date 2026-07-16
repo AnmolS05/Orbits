@@ -1,7 +1,6 @@
 package com.orbits.app.ui.screens
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,11 +40,6 @@ fun SearchScreen(
     val scope = rememberCoroutineScope()
     
     val listState = rememberLazyListState()
-    val isCollapsed = remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 50
-        }
-    }
 
     var selectedOrbitForOptions by remember { mutableStateOf<Orbit?>(null) }
     
@@ -54,9 +48,6 @@ fun SearchScreen(
     var confirmActionType by remember { mutableStateOf<SwipeToDismissBoxValue?>(null) }
     var resetDismissState by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    // Bulk Edit State
-    var isBulkEditMode by remember { mutableStateOf(false) }
-    val selectedOrbits = remember { mutableStateListOf<Orbit>() }
 
     val timeFilters = listOf("Added This Week", "Added This Month", "Older than 6 Months")
 
@@ -81,48 +72,13 @@ fun SearchScreen(
                         )
                     )
                 },
-                actions = {
-                    TextButton(onClick = {
-                        isBulkEditMode = !isBulkEditMode
-                        if (!isBulkEditMode) selectedOrbits.clear()
-                    }) {
-                        Text(if (isBulkEditMode) "Cancel" else "Select", color = Color(0xFF0095F6))
-                    }
-                },
+
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Black
                 )
             )
         },
-        bottomBar = {
-            if (isBulkEditMode) {
-                BottomAppBar(
-                    containerColor = Color(0xFF1C1C1E),
-                    contentPadding = PaddingValues(horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = "${selectedOrbits.size} Selected",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                selectedOrbits.forEach { viewModel.deleteOrbit(it) }
-                                Toast.makeText(context, "Deleted ${selectedOrbits.size} profiles", Toast.LENGTH_SHORT).show()
-                                selectedOrbits.clear()
-                                isBulkEditMode = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                        enabled = selectedOrbits.isNotEmpty()
-                    ) {
-                        Text("Delete", color = Color.White)
-                    }
-                }
-            }
-        },
+
         containerColor = Color.Black
     ) { paddingValues ->
         Column(
@@ -135,17 +91,15 @@ fun SearchScreen(
                 TagPills(
                     tags = uiState.activeTags,
                     selectedTag = selectedTag,
-                    onTagSelect = { viewModel.selectTag(it) },
-                    isCollapsed = isCollapsed.value
+                    onTagSelect = { viewModel.selectTag(it) }
                 )
             }
             
             TagPills(
                 tags = timeFilters,
                 selectedTag = timeFilter,
-                onTagSelect = { viewModel.selectTimeFilter(it) },
-                isCollapsed = isCollapsed.value
-            )
+                onTagSelect = { viewModel.selectTimeFilter(it) }
+                )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -168,7 +122,7 @@ fun SearchScreen(
                     ) { index, orbit ->
                         val dismissState = rememberSwipeToDismissBoxState(
                             confirmValueChange = { value ->
-                                if (!isBulkEditMode && (value == SwipeToDismissBoxValue.EndToStart || value == SwipeToDismissBoxValue.StartToEnd)) {
+                                if (value == SwipeToDismissBoxValue.EndToStart || value == SwipeToDismissBoxValue.StartToEnd) {
                                     orbitToConfirm = orbit
                                     confirmActionType = value
                                     return@rememberSwipeToDismissBoxState true
@@ -182,7 +136,7 @@ fun SearchScreen(
                         }
                         
                         SwipeToDismissBox(
-                            state = if (isBulkEditMode) rememberSwipeToDismissBoxState(confirmValueChange = { false }) else dismissState,
+                            state = dismissState,
                             backgroundContent = {
                                 val direction = dismissState.dismissDirection
                                 val color = when (direction) {
@@ -213,42 +167,19 @@ fun SearchScreen(
                                 }
                             },
                             content = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AnimatedVisibility(visible = isBulkEditMode) {
-                                        Checkbox(
-                                            checked = selectedOrbits.contains(orbit),
-                                            onCheckedChange = { checked ->
-                                                if (checked) selectedOrbits.add(orbit) else selectedOrbits.remove(orbit)
-                                            },
-                                            colors = CheckboxDefaults.colors(
-                                                checkedColor = Color(0xFF0095F6),
-                                                uncheckedColor = Color.Gray
-                                            )
-                                        )
+                                OrbitCard(
+                                    orbit = orbit,
+                                    index = index,
+                                    onViewClick = {
+                                        IntentUtils.openLinkedInProfile(context, orbit.cleanUrl)
+                                    },
+                                    onMoreClick = {
+                                        selectedOrbitForOptions = orbit
+                                    },
+                                    onTogglePin = {
+                                        viewModel.togglePin(orbit)
                                     }
-                                    
-                                    OrbitCard(
-                                        orbit = orbit,
-                                        index = index,
-                                        isBulkEditMode = isBulkEditMode,
-                                        onRowClick = {
-                                            if (isBulkEditMode) {
-                                                if (selectedOrbits.contains(orbit)) selectedOrbits.remove(orbit)
-                                                else selectedOrbits.add(orbit)
-                                            }
-                                        },
-                                        onViewClick = {
-                                            IntentUtils.openLinkedInProfile(context, orbit.cleanUrl)
-                                        },
-                                        onMoreClick = {
-                                            if (!isBulkEditMode) selectedOrbitForOptions = orbit
-                                        },
-                                        onTogglePin = {
-                                            if (!isBulkEditMode) viewModel.togglePin(orbit)
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
+                                )
                             }
                         )
                     }
