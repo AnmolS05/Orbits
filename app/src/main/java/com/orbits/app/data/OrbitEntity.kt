@@ -12,5 +12,6 @@ data class OrbitEntity(
     val notes: String? = null,
     val status: String = "Active",
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long? = null
+    val updatedAt: Long? = null,
+    val isPinned: Boolean = false
 )
